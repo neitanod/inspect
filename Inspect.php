@@ -37,7 +37,46 @@ class Inspect {
 
     // now the actual function call to the inspector method,
     // passing the var name as the label:
-    return dInspect::dump($label, $val, 7);
+    return dInspect::dump($label, $val, 10);
+  }
+  
+  public static function dump($label, $val = "__undefin_e_d__") {
+    if($val == "__undefin_e_d__") {
+
+      /* The first argument is not the label but the
+               variable to inspect itself, so we need a label.
+               Let's try to find out it's name by peeking at
+               the source code.
+      */
+      $val = $label;
+
+      $bt = debug_backtrace();
+      $src = file($bt[0]["file"]);
+      $line = $src[ $bt[0]['line'] - 1 ];
+
+      // let's match the function call and the last closing bracket
+      preg_match( "#Inspect::dump\((.+)\)#", $line, $match );
+
+      /* let's count brackets to see how many of them actually belongs
+               to the var name
+               Eg:   die(inspect($this->getUser()->hasCredential("delete")));
+                      We want:   $this->getUser()->hasCredential("delete")
+      */
+      $max = strlen($match[1]);
+      $varname = "";
+      $c = 0;
+      for($i = 0; $i < $max; $i++) {
+        if(     $match[1]{$i} == "(" ) $c++;
+        elseif( $match[1]{$i} == ")" ) $c--;
+        if($c < 0) break;
+        $varname .=  $match[1]{$i};
+      }
+      $label = $varname;
+    }
+
+    // now the actual function call to the inspector method,
+    // passing the var name as the label:
+    return cInspect::dump($label, $val, 10);
   }
   
 }
@@ -308,3 +347,168 @@ class dInspect {
             '</span> ' . $desc . ' <span class="di-value">' . $val . '</span></div>';
   }
 }
+
+class cInspect {
+  
+  protected static $indent = 0;
+
+  public static function dump($label, &$val, $max_recursion) {
+    $ipath = (substr($label,0,1)=="$")?$label:"$".$label;
+    $bt = debug_backtrace();
+    $o = '// ********************************************** '."\n". 
+         cInspect::ddump($val, array('ipath' => $ipath, 'label' => $label, 'max_recursion' => $max_recursion)) .
+         '// ******* ^^^ dump called from: ' . $bt[1]["file"] . ', line ' . $bt[1]["line"] . "\n";
+    echo $o;
+  }
+
+  public static function ddump(&$val, $params) {
+    self::$indent++;
+    $ipath = empty($params['ipath'])?null:$params['ipath'];
+    $label = !isset($params['label'])?null:$params['label'];
+    $type = empty($params['type'])?null:$params['type'];
+    $len = !isset($params['len'])?null:$params['len'];
+    $units = empty($params['units'])?null:$params['units'];
+    $max_recursion = $params['max_recursion'] === null ? 2 : $params['max_recursion'];
+
+    if (is_null($type))
+      $type = ucfirst(gettype($val));
+    $o = '';
+    if($max_recursion == 0){
+      $o .= cInspect::drawNode("**MAXIMUM RECURSION LEVEL REACHED**", $label, $ipath, "Array", count($val), "elements");
+    } elseif (is_array($val)) {
+      $o .= self::indent().(
+              !($label === false) ? $label : ': ') . ' (' . $type . ', ' . count($val) .
+              " elements) : \n";
+      foreach ($val as $k => $v) {
+        $o .= cInspect::ddump($val[$k], array('ipath' => $ipath.(is_int($k)?'['.$k.']':'[\''.$k.'\']'),
+                                              'label' => "[".$k."]",
+                                              'max_recursion' => $max_recursion - 1));
+      }
+    } elseif (is_object($val)) {
+      $o .= self::indent().(!
+              ($label === false) ? $label . ' ' : ': ') .
+              '(Object ' . get_class($val) .
+              ") :\n";
+      self::$indent++;
+      //$ref = new ReflectionClass(get_class($val));
+      $ref = new ReflectionObject($val);
+
+      // datos de la clase
+      if ($ref->getFileName()) {
+        $o .= cInspect::drawNode($ref->getFileName() . ($ref->getStartLine() ? ", line " .
+                        $ref->getStartLine() : ""), "Definition:", $ref->getFileName(), "");
+      }
+
+      $parent = get_class($val);
+      $ancestors = $parent;
+      while ($parent = get_parent_class($parent)) {
+        $ancestors = $parent . " > " . $ancestors;
+      }
+      if ($ancestors != get_class($val)) {
+        $o .= cInspect::drawNode($ancestors, "Ancestors:", ">", "");
+      }
+
+      // para cada propiedad
+      $props = $ref->getProperties();
+      foreach ($props as $prop) {
+          /*
+                         $prop->setAccessible(true);
+
+                        if($prop->isProtected()) $prop->setAccessible(true);
+          */
+          if($prop->isPublic()) {
+            $prop_value = $prop->getValue($val);
+            $prop_type = ucfirst(gettype($prop_value));
+          } else {
+            $prop_value = "";
+            $prop_type = " ";
+          }
+          self::$indent--;
+          $o .= cInspect::ddump($prop_value, array('ipath' => $ipath.'->'.$prop->name,
+                                                   'label' =>'Property:' . ($prop->isPublic() ? ' public' :
+                                                             '') . ($prop->isPrivate() ? ' private' : '') . ($prop->isProtected() ?
+                                                             ' protected' : '') . ($prop->isStatic() ? ' static' : '') . ' $' . $prop->name,
+                                                   'type' => $prop_type,
+                                                   '',
+                                                   'max_recursion' => $max_recursion - 1));
+          self::$indent++;
+      }
+
+      // para cada método
+      $methods = $ref->getMethods();
+      foreach ($methods as $method) {
+        $params = $method->getParameters();
+        $strparams = array();
+        $optional_params = false;
+        foreach ($params as $param) {
+          $pdefault = null;
+          try {
+            $pdefault = $param->getDefaultValue();
+          }
+          catch (exception $e) {
+          }
+          $pname = $param->name;
+          if ($param->isOptional() && !$optional_params) {
+            $optional_params = true;
+            $pname = "[" . $pname;
+          }
+
+          $strparams[] = $pname . (isset($pdefault) ? " = " . $pdefault : "");
+        }
+        $strparams = implode(", ", $strparams);
+        $emptystring = "";
+        $methodSyntax = $method->name . "(" . $strparams .
+                ($optional_params ? "]" : "") . ")";
+
+
+        $o .= cInspect::drawNode($emptystring, "Method: " . ($method->isPublic() ? ' public' :
+                '') . ($method->isPrivate() ? ' private' : '') . ($method->isProtected() ?
+                ' protected' : '') . ($method->isStatic() ? ' static' : '') . ' '.$methodSyntax,$ipath."->".$methodSyntax, "");
+        //print_r($method);
+      }
+      unset($ref);
+      //cInspect::objectStack("add",$val);
+      self::$indent--;
+      
+    } elseif (is_bool($val)) {
+      $o .= self::indent().(!($label === false) ?
+              $label . ' ' : '... ') . '(' . $type . ')' . ($val ?
+              "TRUE" : "FALSE");
+    } elseif (is_string($val) && $type == 'String') {
+      $len = strlen($val);
+      if ($len < 60) {
+        $o .= cInspect::drawNode('"'.$val.'"', $label, $ipath, $type, $len, is_null($units) ?
+                'characters' : $units);
+      } else {
+        $o .= self::indent().(!
+                ($label === false) ? $label : '...') . ' (String, ' . $len . ' ' . (is_null
+                ($units) ? 'characters' : $units) . ') ' . substr($val, 0,
+                60) . '...' . $val;
+      }
+    } elseif (is_string($val)) {  /* && $type != 'String', we already know that. */
+      $o .= cInspect::drawNode('"'.$val.'"', $label, $ipath, $type, $len, $units);
+    } else {
+      $o .= cInspect::drawNode($val, $label, $ipath);
+    }
+    self::$indent--;
+    return $o;
+  }
+
+  private static function drawNode($val, $label = null, $ipath = "#", $type = null, $len = null, $units = null) {
+    if (gettype($val) == "boolean") $val = $val?'TRUE':'FALSE';
+    $type = is_null($type) ? ucfirst(gettype($val)) : $type;
+    $label = is_null($label) ? '...': $label;
+    $units = is_null($units) ? 'bytes': $units;
+    $len = is_null($len) ? '': $len.' '.$units;
+    $desc = '';
+    if(trim($type))   $desc = trim($len)? $type.', '.$len: $type;
+    $desc = '('.$desc.')';
+    if($desc == '()') $desc = '';
+    return self::indent() . $label .' '. $desc . ($val == "" ? '' : ' => ' . $val ) . "\n";
+  }
+
+  private static function indent(){
+    return str_repeat("    ", self::$indent);
+  }
+}
+
