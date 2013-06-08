@@ -291,7 +291,7 @@ class dInspect {
             $pname = "[" . $pname;
           }
 
-          $strparams[] = $pname . (isset($pdefault) ? " = " . $pdefault : "");
+          $strparams[] = $pname . (isset($pdefault) ? " = " . (is_array($pdefault)?"array()":(is_bool($pdefault)?($pdefault?'TRUE':'FALSE'):$pdefault)) : "");
         }
         $strparams = implode(", ", $strparams);
         $emptystring = "";
