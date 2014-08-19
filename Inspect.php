@@ -190,7 +190,7 @@ class dInspect {
   }
 
   private static function ipathlink($ipath) {
-    return "<span style=\"cursor:pointer\" class=\"di-ipath\" onclick=\"return prompt('Current branch:', '".str_replace("'","\'",str_replace("\\","\\\\",$ipath))."') && false;\">&gt;</span>";
+    return "<span style=\"cursor:pointer\" class=\"di-ipath\" onclick=\"return prompt('Current branch:', \"".str_replace('"','\"',str_replace("\\","\\\\",str_replace('>','&gt;',$ipath)))."\") && false;\">&gt;</span>";
   }
 
 
@@ -322,8 +322,8 @@ class dInspect {
         $o .= '<div class="di-body di-clickable" onclick="toggle(\'' . $rndtag . '\');"> '.dInspect::ipathlink($ipath).' <span class="di-label">' . (!
                 ($label === false) ? $label : '...') . '</span> (String, ' . $len . ' ' . (is_null
                 ($units) ? 'characters' : $units) . ') <span class="di-value">' . htmlentities(substr($val, 0,
-                60),ENT_QUOTES,'UTF-8') . '...</span><pre id="' . $rndtag . '" class="di-longtext">' . htmlentities($val,ENT_QUOTES,'UTF-8') .
-                '</pre></div>';
+                60),ENT_QUOTES,'UTF-8') . '...</span></div><pre id="' . $rndtag . '" class="di-longtext">' . htmlentities($val,ENT_QUOTES,'UTF-8') .
+                '</pre>';
       }
     } elseif (is_string($val)) {  /* && $type != 'String', we already know that. */
       $o .= dInspect::drawNode(htmlentities($val,ENT_QUOTES,'UTF-8'), $label, $ipath, $type, $len, $units);
