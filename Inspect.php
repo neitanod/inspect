@@ -37,9 +37,10 @@ class Inspect {
 
     // now the actual function call to the inspector method,
     // passing the var name as the label:
-    return dInspect::dump($label, $val, 10);
+    dInspect::dump($label, $val, 10);
+    return $val;
   }
-  
+
   public static function dump($label, $val = "__undefin_e_d__") {
     if($val == "__undefin_e_d__") {
 
@@ -76,9 +77,10 @@ class Inspect {
 
     // now the actual function call to the inspector method,
     // passing the var name as the label:
-    return cInspect::dump($label, $val, 10);
+    cInspect::dump($label, $val, 10);
+    return $val;
   }
-  
+
 }
 
 class dInspect {
@@ -349,13 +351,13 @@ class dInspect {
 }
 
 class cInspect {
-  
+
   protected static $indent = 0;
 
   public static function dump($label, &$val, $max_recursion) {
     $ipath = (substr($label,0,1)=="$")?$label:"$".$label;
     $bt = debug_backtrace();
-    $o = '// ********************************************** '."\n". 
+    $o = '// ********************************************** '."\n".
          cInspect::ddump($val, array('ipath' => $ipath, 'label' => $label, 'max_recursion' => $max_recursion)) .
          '// ******* ^^^ dump called from: ' . $bt[1]["file"] . ', line ' . $bt[1]["line"] . "\n";
     echo $o;
@@ -469,11 +471,11 @@ class cInspect {
       unset($ref);
       //cInspect::objectStack("add",$val);
       self::$indent--;
-      
+
     } elseif (is_bool($val)) {
       $o .= self::indent().(!($label === false) ?
-              $label . ' ' : '... ') . '(' . $type . ')' . ($val ?
-              "TRUE" : "FALSE");
+              $label . ' ' : '... ') . '(' . $type . ') ' . ($val ?
+              "TRUE" : "FALSE")."\n";
     } elseif (is_string($val) && $type == 'String') {
       $len = strlen($val);
       if ($len < 60) {
