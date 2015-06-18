@@ -22,7 +22,10 @@ formato de la información de salida.
 Sintaxis
 
   variant Inspect::view(string $name, variant $element)
+  variant Inspect::view(variant $element)
+
   variant Inspect::dump(string $name, variant $element)
+  variant Inspect::dump(variant $element)
 
 Ambas funciones devuelven el valor $element recibido para poder ser llamadas
 inline.  Por ejemplo, si tenemos:
@@ -42,10 +45,18 @@ la variable que se le está pasando en el segundo parámetro.
 
 Ej:  Inspect::view("text", $text);
 
-También puede usarse como label para el output (una frase
-identificatoria), pero si Inspect::view() no conoce el nombre de
-la variable que está inspeccionando no puede ofrecer
-correctamente la funcionalidad de ipath.
+Si se omite el primer parámetro -es decir, cuando se usa la sintaxis alternativa-
+la función intentará capturar la expresión que se usó en la llamada:
+
+  Inspect::view(strtoupper($myVar));
+
+En este ejemplo, el valor a inspeccionar será una cadena en mayúsculas, mientras
+que el nombre descriptivo de la expresión recibida será la cadena
+"strtoupper($myVar)".
+
+El parámetro $name también puede usarse como etiqueta para el output (una frase
+identificatoria), pero si Inspect::view() no conoce el nombre de la variable que 
+está inspeccionando no ofrecerá correctamente la funcionalidad de ipath.
 
 Ej:  Inspect::view("Datos del usuario:", $this->user);
 
