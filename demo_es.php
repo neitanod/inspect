@@ -70,19 +70,34 @@ de un objeto o array.
 
 ';
 
-Inspect::view("long_text",$long_text);
+echo "<h3>Ejemplo usando Inspect::view(\$long_text):</h3>\n";
+Inspect::view($long_text);
+echo "<h3>Ejemplo usando Inspect::dump(\$long_text):</h3>\n<textarea cols=\"120\" rows=\"70\">\n";
+Inspect::dump($long_text);
+echo "\n</textarea>";
+
+$short_text = "Este es un texto corto con acentos.  ¡·…È.  Est· codificado en ISO-8859-1.";
+echo "<h3>Ejemplo usando Inspect::view(\$short_text):</h3>\n";
+Inspect::view($short_text);
+echo "<h3>Ejemplo usando Inspect::dump(\$short_text):</h3>\n<textarea cols=\"120\" rows=\"6\">\n";
+Inspect::dump($short_text);
+echo "\n</textarea>";
 
 $integer = 1000;
-Inspect::view('integer',$integer);
+Inspect::view($integer);
 
 $decimal = 10.50;
-Inspect::view('decimal',$decimal);
+Inspect::view($decimal);
+
+echo "<h3>Ejemplo usando Inspect::dump(\$decimal):</h3>\n<textarea cols=\"120\" rows=\"5\">\n";
+Inspect::dump($decimal);
+echo "\n</textarea>";
 
 $text = 'This is a string';
-Inspect::view('text',$text);
+Inspect::view($text);
 
 $array = array('a'=>'A','b'=>'B',0,1,2,3);
-Inspect::view('array',$array);
+Inspect::view($array);
 
 echo "<h2>INSPECCIONANDO OBJETOS NATIVOS DE PHP</h2>";
 
@@ -91,6 +106,9 @@ Inspect::view("directoryIterator", $directoryIterator);
 
 $reflectionParameter = new ReflectionParameter('substr',1);
 Inspect::view("reflectionParameter",$reflectionParameter);
+echo "<h3>Ejemplo usando Inspect::dump():</h3>\n<textarea cols=\"120\" rows=\"25\">\n";
+Inspect::dump("reflectionParameter",$reflectionParameter);
+echo "\n</textarea>";
 
 
 
@@ -193,7 +211,6 @@ function a($param1 = "nada"){
 	$a = new A; $a->var = "Foo Bar";
   Inspect::view('a', $a);
   Inspect::view("A Object Vars", get_object_vars($a));
-  Inspect::dump($a);
 }
 
 function b($a = "optativo"){ a("algo");}

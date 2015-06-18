@@ -91,7 +91,7 @@ class dInspect {
     $o = '<div class="dinspect">' . dInspect::ddump($val, array('ipath' => $ipath, 'label' => $label, 'max_recursion' => $max_recursion)) .
             '<div class="di-footer">Called from: <span class="di-label">' . $bt[1]["file"] .
             '</span>, line ' . $bt[1]["line"] .
-            '<span class="di-credits">Inspector v1.0 by <a href="mailto:grignoli@at.gmail.com">Sebasti&aacute;n Grignoli</a> (c) 2010 </span></div></div>';
+            '<span class="di-credits">Inspector v1.0 by <a href="mailto:grignoli@at.gmail.com">Sebasti&aacute;n Grignoli</a> (c) 2010 </span></div></div>'."\n";
     echo $o;
   }
 
@@ -192,7 +192,7 @@ class dInspect {
   }
 
   private static function ipathlink($ipath) {
-    return "<span style=\"cursor:pointer\" class=\"di-ipath\" onclick=\"return prompt('Current branch:', \"".str_replace('"','\"',str_replace("\\","\\\\",str_replace('>','&gt;',$ipath)))."\") && false;\">&gt;</span>";
+    return '<span style="cursor:pointer" class="di-ipath" onclick="return prompt(\'Current branch:\', \''.str_replace("'","\&#39;",str_replace('"','&quot;',str_replace("\\","\\\\",str_replace('>','&gt;',$ipath)))).'\') && false;">&gt;</span>';
   }
 
 
@@ -216,20 +216,20 @@ class dInspect {
       $rndtag = md5(microtime() . rand(0, 1000));
       $o .= '<div class="di-body di-clickable" onclick="toggle(\'' . $rndtag . '\');"> '.dInspect::ipathlink($ipath).' <span class="di-label">' . (!
               ($label === false) ? $label : '...') . '</span> (' . $type . ', ' . count($val) .
-              ' elements) <span class="di-value">...</span></div><div id="' . $rndtag .
+              ' elements) <span class="di-value">...</span></div>'."\n".'<div id="' . $rndtag .
               '" class="di-node">';
       foreach ($val as $k => $v) {
         $o .= dInspect::ddump($val[$k], array('ipath' => $ipath.(is_int($k)?'['.$k.']':'[\''.$k.'\']'),
                                               'label' => $k,
                                               'max_recursion' => $max_recursion - 1));
       }
-      $o .= '</div>';
+      $o .= "</div>\n";
     } elseif (is_object($val)) {
       $rndtag = md5(microtime() . rand(0, 1000));
       $o .= '<div class="di-body di-clickable" onclick="toggle(\'' . $rndtag . '\');"> '.dInspect::ipathlink($ipath).' <span class="di-label">' . (!
               ($label === false) ? $label . ' ' : '... ') .
               '</span> (Object <span class="di-value">' . get_class($val) .
-              '</span>) <span class="di-value">...</span></div><div id="' . $rndtag .
+              '</span>) <span class="di-value">...</span></div>'."\n".'<div id="' . $rndtag .
               '" class="di-node">';
 
       //$ref = new ReflectionClass(get_class($val));
@@ -307,28 +307,31 @@ class dInspect {
         //print_r($method);
       }
       unset($ref);
-      $o .= '</div>';
+      $o .= "</div>\n";
       //dInspect::objectStack("add",$val);
 
     } elseif (is_bool($val)) {
       $o .= '<div class="di-body"> '.dInspect::ipathlink($ipath).' <span class="di-label">' . (!($label === false) ?
               $label . ' ' : '... ') . '</span>(' . $type . ') <span class="di-value">' . ($val ?
-              "TRUE" : "FALSE") . '</span></div>';
+              "TRUE" : "FALSE") . "</span></div>\n";
     } elseif (is_string($val) && $type == 'String') {
       $len = strlen($val);
+      $encoding = mb_detect_encoding($val, 'UTF-8, ISO-8859-1', true);
       if ($len < 60) {
-        $o .= dInspect::drawNode(htmlentities($val,ENT_QUOTES,'UTF-8'), $label, $ipath, $type, $len, is_null($units) ?
+        $type = $type . ", ".$encoding;
+        $o .= dInspect::drawNode(htmlspecialchars($val,ENT_QUOTES,$encoding), $label, $ipath, $type, $len, is_null($units) ?
                 'characters' : $units);
       } else {
         $rndtag = md5(microtime() . rand(0, 1000));
         $o .= '<div class="di-body di-clickable" onclick="toggle(\'' . $rndtag . '\');"> '.dInspect::ipathlink($ipath).' <span class="di-label">' . (!
-                ($label === false) ? $label : '...') . '</span> (String, ' . $len . ' ' . (is_null
-                ($units) ? 'characters' : $units) . ') <span class="di-value">' . htmlentities(substr($val, 0,
-                60),ENT_QUOTES,'UTF-8') . '...</span></div><pre id="' . $rndtag . '" class="di-longtext">' . htmlentities($val,ENT_QUOTES,'UTF-8') .
+                ($label === false) ? $label : '...') . '</span> (String, '.$encoding.', ' . $len . ' ' . (is_null
+                ($units) ? 'characters' : $units) . ') <span class="di-value">' . htmlspecialchars(substr($val, 0,
+                60),ENT_QUOTES,$encoding) . '...</span></div>'."\n".'<pre id="' . $rndtag . '" class="di-longtext">' . htmlspecialchars($val,ENT_QUOTES,$encoding) .
                 '</pre>';
       }
     } elseif (is_string($val)) {  /* && $type != 'String', we already know that. */
-      $o .= dInspect::drawNode(htmlentities($val,ENT_QUOTES,'UTF-8'), $label, $ipath, $type, $len, $units);
+      $encoding = mb_detect_encoding($val, 'UTF-8, ISO-8859-1', true);
+      $o .= dInspect::drawNode(htmlspecialchars($val,ENT_QUOTES,$encoding), $label, $ipath, $type, $len, $units);
     } else {
       $o .= dInspect::drawNode($val, $label, $ipath);
     }
@@ -346,7 +349,7 @@ class dInspect {
     $desc = '('.$desc.')';
     if($desc == '()') $desc = '';
     return '<div class="di-body">'.dInspect::ipathlink($ipath).' <span class="di-label">' . $label .
-            '</span> ' . $desc . ' <span class="di-value">' . $val . '</span></div>';
+            '</span> ' . $desc . ' <span class="di-value">' . $val . "</span></div>\n";
   }
 }
 
@@ -478,15 +481,10 @@ class cInspect {
               "TRUE" : "FALSE")."\n";
     } elseif (is_string($val) && $type == 'String') {
       $len = strlen($val);
-      if ($len < 60) {
-        $o .= cInspect::drawNode('"'.$val.'"', $label, $ipath, $type, $len, is_null($units) ?
-                'characters' : $units);
-      } else {
-        $o .= self::indent().(!
-                ($label === false) ? $label : '...') . ' (String, ' . $len . ' ' . (is_null
-                ($units) ? 'characters' : $units) . ') ' . substr($val, 0,
-                60) . '...' . $val;
-      }
+      $encoding = mb_detect_encoding($val, 'UTF-8, ISO-8859-1', true);
+      $type .= ", ".$encoding;
+      $o .= cInspect::drawNode('"'.$val.'"', $label, $ipath, $type, $len, is_null($units) ?
+              'characters' : $units);
     } elseif (is_string($val)) {  /* && $type != 'String', we already know that. */
       $o .= cInspect::drawNode('"'.$val.'"', $label, $ipath, $type, $len, $units);
     } else {
