@@ -37,7 +37,7 @@ Podemos inspeccionar $myObject de la siguiente manera:
   $myvar = Inspect::view($myObject)->someMethod();
 
 
-Inspect::view() muestra el contenido de el elemento $element,
+Inspect::view() muestra el contenido del elemento $element,
 que puede ser una variable de PHP de cualquier tipo.
 
 El parámetro $name debe informarle a Inspect::view() el nombre de
