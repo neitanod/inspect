@@ -130,6 +130,9 @@ $demoObject = new DemoClass();
 
 Inspect::view('demoObject', $demoObject);
 
+echo "<h3>Ejemplo usando Inspect::dump():</h3>\n<textarea cols=\"120\" rows=\"25\">\n";
+Inspect::dump('demoObject', $demoObject);
+echo "\n</textarea>";
 
 
 
