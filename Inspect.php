@@ -81,6 +81,46 @@ class Inspect {
     return $val;
   }
 
+  public static function get($label, $val = "__undefin_e_d__") {
+    if($val == "__undefin_e_d__") {
+
+      /* The first argument is not the label but the
+               variable to inspect itself, so we need a label.
+               Let's try to find out it's name by peeking at
+               the source code.
+      */
+      $val = $label;
+
+      $bt = debug_backtrace();
+      $src = file($bt[0]["file"]);
+      $line = $src[ $bt[0]['line'] - 1 ];
+
+      // let's match the function call and the last closing bracket
+      preg_match( "#Inspect::get\((.+)\)#", $line, $match );
+
+      /* let's count brackets to see how many of them actually belongs
+               to the var name
+               Eg:   die(inspect($this->getUser()->hasCredential("delete")));
+                      We want:   $this->getUser()->hasCredential("delete")
+      */
+      $max = strlen($match[1]);
+      $varname = "";
+      $c = 0;
+      for($i = 0; $i < $max; $i++) {
+        if(     $match[1]{$i} == "(" ) $c++;
+        elseif( $match[1]{$i} == ")" ) $c--;
+        if($c < 0) break;
+        $varname .=  $match[1]{$i};
+      }
+      $label = $varname;
+    }
+
+    // now the actual function call to the inspector method,
+    // passing the var name as the label:
+    $output = cInspect::get($label, $val, 10);
+    return $output;
+  }
+
 }
 
 class dInspect {
@@ -356,6 +396,15 @@ class dInspect {
 class cInspect {
 
   protected static $indent = 0;
+
+  public static function get($label, &$val, $max_recursion) {
+    $ipath = (substr($label,0,1)=="$")?$label:"$".$label;
+    $bt = debug_backtrace();
+    $o = '// ********************************************** '."\n".
+         cInspect::ddump($val, array('ipath' => $ipath, 'label' => $label, 'max_recursion' => $max_recursion)) .
+         '// ******* ^^^ dump called from: ' . $bt[1]["file"] . ', line ' . $bt[1]["line"] . "\n";
+    return $o;
+  }
 
   public static function dump($label, &$val, $max_recursion) {
     $ipath = (substr($label,0,1)=="$")?$label:"$".$label;
