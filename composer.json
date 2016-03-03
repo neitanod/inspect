@@ -1,0 +1,20 @@
+{
+    "name": "neitanod/inspect",
+    "homepage": "https://github.com/neitanod/inspect",
+    "type": "library",
+    "description": "PHP Class Inspect featuring awesome function Inspect::view() to deeply inspect a PHP object.",
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "authors": [
+        {
+            "name":  "Sebastián Grignoli",
+            "email": "grignoli@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": {
+            "Inspect\\": "src/"
+        }
+    }
+}
