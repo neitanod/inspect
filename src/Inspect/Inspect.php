@@ -313,7 +313,7 @@ class dInspect {
               '" class="di-node">';
 
       //$ref = new ReflectionClass(get_class($val));
-      $ref = new ReflectionObject($val);
+      $ref = new \ReflectionObject($val);
 
       // datos de la clase
       if ($ref->getFileName()) {
@@ -485,7 +485,7 @@ class cInspect {
               ") :\n";
       self::$indent++;
       //$ref = new ReflectionClass(get_class($val));
-      $ref = new ReflectionObject($val);
+      $ref = new \ReflectionObject($val);
 
       // datos de la clase
       if ($ref->getFileName()) {
