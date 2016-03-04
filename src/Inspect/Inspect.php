@@ -365,7 +365,7 @@ class dInspect {
           try {
             $pdefault = $param->getDefaultValue();
           }
-          catch (exception $e) {
+          catch (\ReflectionException $e) {
           }
           $pname = $param->name;
           if ($param->isOptional() && !$optional_params) {
@@ -539,7 +539,7 @@ class cInspect {
           try {
             $pdefault = $param->getDefaultValue();
           }
-          catch (exception $e) {
+          catch (\ReflectionException $e) {
           }
           $pname = $param->name;
           if ($param->isOptional() && !$optional_params) {
