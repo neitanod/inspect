@@ -546,8 +546,7 @@ class cInspect {
             $optional_params = true;
             $pname = "[" . $pname;
           }
-
-          $strparams[] = $pname . (isset($pdefault) ? " = " . $pdefault : "");
+          $strparams[] = $pname . (isset($pdefault) ? " = " . (is_array($pdefault)?'Array':$pdefault) : "");
         }
         $strparams = implode(", ", $strparams);
         $emptystring = "";
